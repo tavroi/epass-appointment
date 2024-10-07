@@ -1,4 +1,4 @@
-ssh -o StrictHostKeyChecking=no -tt digipass@dev.digipass.dolphinchat.ai  <<"EOF"
+ssh -o StrictHostKeyChecking=no -tt digipass@4.188.73.74  <<"EOF"
     cd /home/digipass/epass-appointment
     git stash
     git checkout dev
