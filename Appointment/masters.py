@@ -56,32 +56,28 @@ def get_status():
                 "status": False}
     
 
-def get_time_slots(officer_id, department_id, date, day):
+def get_time_slots(officer_id, department_id,date,day):
     try:
         date_obj = datetime.fromtimestamp(int(date))
 
         now = datetime.now()
         today = now.date()
-
-        # Check if the officer_id exists and get available slot_ids
-        officer_availability = db.officers_availability.find_one({"officer_id": int(officer_id), "day": int(day)})
+        officer_availability = db.officers_availability.find_one({"officer_id": int(officer_id),"day":int(day),"valid_from": {"$lte": int(date)},"valid_to": {"$gte": int(date)}})
         print("officer_availability:",officer_availability)
 
         if officer_availability:
             slot_ids = officer_availability.get("slot", [])
             print(slot_ids)
-            # Fetch the relevant slots for the officer
+    
             slots = list(db.slots.find({"slot_id": {"$in": slot_ids}}))
             print("slots:",slots)
 
-            # Immediately return officer's available slots if they exist
             if slots:
                 available_slots = {slot['slot_time'] for slot in slots}
                 sorted_available_slots = sorted(available_slots, key=lambda x: datetime.strptime(x.split(" - ")[0], '%H:%M'))
                 return {"data": list(sorted_available_slots), "status": True, "code": READ_CODE,
                         "errorMessage": "", "message": "Available time slots for officer"}
 
-        # If officer_id does not exist or has no slots, proceed with the original flow
         slots = list(db.slots.find({}))
 
         departments = list(db.department_roster.find({"department_id": int(department_id)}))
@@ -114,12 +110,11 @@ def get_time_slots(officer_id, department_id, date, day):
                 slot_start = datetime.strptime(start_time_str, '%H:%M').time()
                 slot_end = datetime.strptime(end_time_str, '%H:%M').time()
 
-                # Create a datetime object for today's date with the slot start time
                 slot_start_datetime = datetime.combine(now.date(), slot_start)
 
                 if (dept_start <= slot_start < dept_end) and not (lunch_start < slot_start < lunch_end or lunch_start < slot_end <= lunch_end):
                     if date_obj.date() == today:
-                        if slot_start_datetime > now:  # Compare with datetime object
+                        if slot_start_datetime > now:  
                             available_slots.add(slot_time_str) 
                     else:
                         available_slots.add(slot_time_str)  
