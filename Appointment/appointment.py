@@ -67,6 +67,7 @@ def book_appointment(appointment_details: dict):
             "organization_name": appointment_details.get('organization_name', ''),
             "appointment_id": appointment_id(),
             "created_at": current_timestamp(),
+            "appointment_status": "pending"
         }
 
         db.appointment_bookings.insert_one(appointment_data)
