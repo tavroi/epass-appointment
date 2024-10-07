@@ -7,6 +7,7 @@ import uuid
 import json
 import requests
 import time
+from datetime import time
 import regex as re
 import pandas as pd
 from io import BytesIO
@@ -258,3 +259,8 @@ def is_valid_mobile(mobile):
     except ValueError:
         return False
     return len(mobile_str) == 10
+
+def seconds_to_time(seconds):
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    return time(hour=hours, minute=minutes)

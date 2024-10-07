@@ -1,5 +1,4 @@
 from Utils.config import *
-from datetime import time
 
 def get_premises():
     try:
@@ -44,11 +43,6 @@ def get_officials():
         logger.info(20 * "....")
         return {"code": EXCEPTION_CODE, "data": {}, "message": EXCEPTION_MESSAGE, "errorMessage": e.__str__(),
                 "status": False}
-
-def seconds_to_time(seconds):
-    hours = seconds // 3600
-    minutes = (seconds % 3600) // 60
-    return time(hour=hours, minute=minutes)
 
 def get_time_slots(department_id, date):
     try:

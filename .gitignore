@@ -10,7 +10,6 @@ bin-release/
 [Bb]in/
 
 test.py
-docker-compose.yml
 
 # Other files and folders
 .settings/
