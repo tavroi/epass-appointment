@@ -55,24 +55,17 @@ def get_status():
         return {"code": EXCEPTION_CODE, "data": {}, "message": EXCEPTION_MESSAGE, "errorMessage": e.__str__(),
                 "status": False}
     
-def get_time_slots(officer_id, department_id, date, day):
+def get_time_slots(officer_id, department_id, date):
     try:
         date_obj = datetime.fromtimestamp(int(date))
         now = datetime.now()
         today = now.date()
-
-        holiday_obj = db.department_holidays.find_one({"holiday_date":int(date)})
-        holiday_date = [holiday_obj.get("holiday_date"," ")]
-        print(holiday_date)
-
-        if int(date) in  holiday_date:
-            return {"data": [], "status": False, "code": READ_CODE, 
-                        "errorMessage": "", "message": "No available slots on holidays"}
-
+        day_of_week = date_obj.weekday()
+        print("day:",day_of_week)
 
         officer_availability = db.officers_availability.find_one({
             "officer_id": int(officer_id),
-            "day": int(day),
+            "day": day_of_week,
             "valid_from": {"$lte": int(date)},
             "valid_to": {"$gte": int(date)}
         })
@@ -104,6 +97,13 @@ def get_time_slots(officer_id, department_id, date, day):
                     sorted_available_slots = sorted(available_slots, key=lambda x: datetime.strptime(x.split(" - ")[0], '%H:%M'))
                     return {"data": list(sorted_available_slots), "status": True, "code": READ_CODE,
                             "errorMessage": "", "message": "Available time slots for officer"}
+                
+        holiday_obj = db.department_holidays.find_one({"holiday_date":int(date)})
+        if holiday_obj:
+            holiday_date = [holiday_obj.get("holiday_date"," ")]
+            if int(date) in  holiday_date:
+                return {"data": [], "status": False, "code": READ_CODE, 
+                        "errorMessage": "", "message": "No available slots on holidays"}
 
 
         departments = list(db.department_roster.find({"department_id": int(department_id)}))
@@ -118,9 +118,7 @@ def get_time_slots(officer_id, department_id, date, day):
         for department in departments:
             week_off_days = [department.get("week_off", [])]
             print("Week off days:", week_off_days)
-
-            # Check if the current day is a week off
-            if int(day) in week_off_days:
+            if day_of_week in week_off_days:
                 return {"data": [], "status": False, "code": READ_CODE, 
                         "errorMessage": "", "message": "No available slots on weekends"}
 

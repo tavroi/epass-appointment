@@ -81,11 +81,11 @@ async def sub_department_api(request: Request,sub_department_id=int):
                         status_code=HTTP_400_BAD_REQUEST if response.get("is_exception", False) else HTTP_200_OK)
 
 @router.get("/get-time-slots")
-async def time_slots_api(request: Request,officer_id='',department_id=" ",date=int,day=int):
+async def time_slots_api(request: Request,officer_id='',department_id=" ",date=int):
     method_name = inspect.stack()[0][3]
     method, path, ip = get_request_data(request)
     try:
-        response = get_time_slots(officer_id,department_id,date,day)
+        response = get_time_slots(officer_id,department_id,date)
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, Input-Data: , File-Name: {FILE_NAME}, "
                      f"Method-Name: {method_name}")
