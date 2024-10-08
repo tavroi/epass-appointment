@@ -61,6 +61,15 @@ def get_time_slots(officer_id, department_id, date, day):
         now = datetime.now()
         today = now.date()
 
+        holiday_obj = db.department_holidays.find_one({"holiday_date":int(date)})
+        holiday_date = [holiday_obj.get("holiday_date"," ")]
+        print(holiday_date)
+
+        if int(date) in  holiday_date:
+            return {"data": [], "status": False, "code": READ_CODE, 
+                        "errorMessage": "", "message": "No available slots on holidays"}
+
+
         officer_availability = db.officers_availability.find_one({
             "officer_id": int(officer_id),
             "day": int(day),
