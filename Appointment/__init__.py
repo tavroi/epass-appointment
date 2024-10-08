@@ -64,11 +64,11 @@ async def sub_department_api(request: Request,department_id=" "):
                         status_code=HTTP_400_BAD_REQUEST if response.get("is_exception", False) else HTTP_200_OK)
 
 @router.get("/get-officials")
-async def sub_department_api(request: Request):
+async def sub_department_api(request: Request,sub_department_id=int):
     method_name = inspect.stack()[0][3]
     method, path, ip = get_request_data(request)
     try:
-        response = get_officials()
+        response = get_officials(sub_department_id)
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, Input-Data: , File-Name: {FILE_NAME}, "
                      f"Method-Name: {method_name}")

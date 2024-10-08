@@ -33,9 +33,9 @@ def get_sub_departments(department_id):
         return {"code": EXCEPTION_CODE, "data": {}, "message": EXCEPTION_MESSAGE, "errorMessage": e.__str__(),
                 "status": False}
     
-def get_officials():
+def get_officials(sub_department_id):
     try:
-        result=list(db.officials.find({"is_active":True}))
+        result=list(db.officials.find({"sub_department_id":int(sub_department_id),"is_active":True}))
         return {"data": result, "status": True, "code": READ_CODE, "errorMessage": "", "message": "Officials list"}
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, File-Name: {os.path.basename(__file__)}, "
