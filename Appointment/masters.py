@@ -55,30 +55,47 @@ def get_status():
         return {"code": EXCEPTION_CODE, "data": {}, "message": EXCEPTION_MESSAGE, "errorMessage": e.__str__(),
                 "status": False}
     
-
-def get_time_slots(officer_id, department_id,date,day):
+def get_time_slots(officer_id, department_id, date, day):
     try:
         date_obj = datetime.fromtimestamp(int(date))
-
         now = datetime.now()
         today = now.date()
-        officer_availability = db.officers_availability.find_one({"officer_id": int(officer_id),"day":int(day),"valid_from": {"$lte": int(date)},"valid_to": {"$gte": int(date)}})
-        print("officer_availability:",officer_availability)
+
+        officer_availability = db.officers_availability.find_one({
+            "officer_id": int(officer_id),
+            "day": int(day),
+            "valid_from": {"$lte": int(date)},
+            "valid_to": {"$gte": int(date)}
+        })
 
         if officer_availability:
             slot_ids = officer_availability.get("slot", [])
             print(slot_ids)
-    
+
             slots = list(db.slots.find({"slot_id": {"$in": slot_ids}}))
-            print("slots:",slots)
+            print("slots:", slots)
 
             if slots:
-                available_slots = {slot['slot_time'] for slot in slots}
-                sorted_available_slots = sorted(available_slots, key=lambda x: datetime.strptime(x.split(" - ")[0], '%H:%M'))
-                return {"data": list(sorted_available_slots), "status": True, "code": READ_CODE,
-                        "errorMessage": "", "message": "Available time slots for officer"}
+                available_slots = set()  
 
-        slots = list(db.slots.find({}))
+                for slot in slots:
+                    slot_time_str = slot['slot_time']  
+                    start_time_str, end_time_str = slot_time_str.split(" - ")
+
+                    slot_start = datetime.strptime(start_time_str, '%H:%M').time()
+                    slot_start_datetime = datetime.combine(now.date(), slot_start)
+
+                    if date_obj.date() == today:
+                        if slot_start_datetime > now:  
+                            available_slots.add(slot_time_str)
+                    else:
+                        available_slots.add(slot_time_str)
+
+                if available_slots:
+                    sorted_available_slots = sorted(available_slots, key=lambda x: datetime.strptime(x.split(" - ")[0], '%H:%M'))
+                    return {"data": list(sorted_available_slots), "status": True, "code": READ_CODE,
+                            "errorMessage": "", "message": "Available time slots for officer"}
+
 
         departments = list(db.department_roster.find({"department_id": int(department_id)}))
 
@@ -86,12 +103,17 @@ def get_time_slots(officer_id, department_id,date,day):
             return {"data": [], "status": False, "code": READ_CODE, 
                     "errorMessage": "Department not found", "message": ""}
 
-        available_slots = set()  
+        slots = list(db.slots.find({}))
+        available_slots = set()
 
         for department in departments:
-            if date_obj.weekday() in [6, 7]: 
-                if "saturday" in department.get("week_off", []) or "sunday" in department.get("week_off", []):
-                    continue  
+            week_off_days = [department.get("week_off", [])]
+            print("Week off days:", week_off_days)
+
+            # Check if the current day is a week off
+            if int(day) in week_off_days:
+                return {"data": [], "status": False, "code": READ_CODE, 
+                        "errorMessage": "", "message": "No available slots on weekends"}
 
             dept_start_time = department.get("start_time", 0)  
             dept_end_time = department.get("end_time", 86400)  
@@ -112,12 +134,14 @@ def get_time_slots(officer_id, department_id,date,day):
 
                 slot_start_datetime = datetime.combine(now.date(), slot_start)
 
+                # Check if the slot is within department hours and not during lunch
                 if (dept_start <= slot_start < dept_end) and not (lunch_start < slot_start < lunch_end or lunch_start < slot_end <= lunch_end):
+                    # Only add future slots for today
                     if date_obj.date() == today:
                         if slot_start_datetime > now:  
-                            available_slots.add(slot_time_str) 
+                            available_slots.add(slot_time_str)
                     else:
-                        available_slots.add(slot_time_str)  
+                        available_slots.add(slot_time_str) 
 
         sorted_available_slots = sorted(available_slots, key=lambda x: datetime.strptime(x.split(" - ")[0], '%H:%M'))
                        
