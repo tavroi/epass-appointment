@@ -29,11 +29,11 @@ async def premises_api(request: Request):
                         status_code=HTTP_400_BAD_REQUEST if response.get("is_exception", False) else HTTP_200_OK)
 
 @router.get("/get-departments")
-async def department_api(request: Request):
+async def department_api(request: Request,premises=" "):
     method_name = inspect.stack()[0][3]
     method, path, ip = get_request_data(request)
     try:
-        response = get_departments()
+        response = get_departments(premises)
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, Input-Data: , File-Name: {FILE_NAME}, "
                      f"Method-Name: {method_name}")

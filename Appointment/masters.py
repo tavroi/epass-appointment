@@ -11,9 +11,9 @@ def get_premises():
         return {"code": EXCEPTION_CODE, "data": {}, "message": EXCEPTION_MESSAGE, "errorMessage": e.__str__(),
                 "status": False}
 
-def get_departments():
+def get_departments(premises):
     try:
-        result=list(db.departments.find({}))
+        result=list(db.departments.find({"premises":int(premises)}))
         return {"data": result, "status": True, "code": READ_CODE, "errorMessage": "", "message": "Departments list"}
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, File-Name: {os.path.basename(__file__)}, "
