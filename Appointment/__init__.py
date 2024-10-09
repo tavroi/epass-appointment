@@ -32,6 +32,7 @@ async def premises_api(request: Request):
 async def department_api(request: Request,premises=" "):
     method_name = inspect.stack()[0][3]
     method, path, ip = get_request_data(request)
+    
     try:
         response = get_departments(premises)
     except Exception as e:
