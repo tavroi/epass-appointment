@@ -13,7 +13,7 @@ def get_premises():
 
 def get_departments(premises):
     try:
-        result=list(db.departments.find({"premises":int(premises)}))
+        result=list(db.departments.find({"premises_id":int(premises)}))
         return {"data": result, "status": True, "code": READ_CODE, "errorMessage": "", "message": "Departments list"}
     except Exception as e:
         logger.error(f"Exception Message: {traceback.print_exc()}, File-Name: {os.path.basename(__file__)}, "
