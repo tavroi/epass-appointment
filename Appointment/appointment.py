@@ -49,8 +49,6 @@ def book_appointment(appointment_details: dict):
             "_id":unique_id(),
             "visitor_id": visitor_id,
             "phone_number": mobile_no,
-            "start_time": appointment_details.get('start_time', ''),
-            "end_time": appointment_details.get('end_time', ''),
             "dept_id": appointment_details.get('dept_id', ''),
             "officer_id": appointment_details.get('officer_id', ''),
             "purpose": appointment_details.get('purpose', ''),
