@@ -61,7 +61,6 @@ def book_appointment(appointment_details: dict):
             "office_id": appointment_details.get('office_id', ''),
             "state_id": appointment_details.get('state_id', ''),
             "district_id": appointment_details.get('district_id', ''),
-            "visitor_card": appointment_details.get('visitor_card', ''),
             "designation": appointment_details.get('designation', ''),
             "appointment_date": appointment_date,
             "organization_name": appointment_details.get('organization_name', ''),
