@@ -55,6 +55,7 @@ def book_appointment(appointment_details: dict):
             "slot_id": slot_id,
             "first_name": first_name,
             "last_name":last_name,
+            "email_id":appointment_details.get("email"," "),
             "gender": appointment_details.get("gender"," "),
             "sub_department_id": appointment_details.get('sub_department_id', ''),
             "state_id": appointment_details.get('state_id', ''),
