@@ -78,6 +78,7 @@ def add_managers(officer_id, manager_details: list):
 
             if existing_manager:
                 existing_telephones.add(telephone)
+                print(existing_telephones)
 
         for manager in manager_details:
             telephone = manager.get("phone_number", " ")
@@ -97,7 +98,8 @@ def add_managers(officer_id, manager_details: list):
                 "officer_id": officer_id,
                 "name": manager.get("name", ""),
                 "telephone": telephone,
-                "email": manager.get("email", "")
+                "email": manager.get("email", ""),
+                "created_at":current_timestamp()
             }
             db.managers.insert_one(manager_data)
 
