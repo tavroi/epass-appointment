@@ -138,3 +138,4 @@ async def book_appointment_api(request: Request) -> JSONResponse:
                                          member_id=None, method_name=method_name, file_name=FILE_NAME,
                                          module_name=MODULE_NAME.capitalize(), code=response['code'])
         return JSONResponse(content=return_response, status_code=HTTP_400_BAD_REQUEST)
+    

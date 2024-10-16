@@ -27,7 +27,7 @@ NOT_SUPPORTED = "{name} not Supported"
 
 BOOKING_ALREADY_VERIFIED= "Booking has already been verified and is confirmed"
 NO_BOOKING_FOUND="No booking found. please verify details and try again"
-NO_EVENT_FOUND="No event found. please verify details and try again"
+NO_OFFICER_FOUND="No officer found. please verify details and try again"
 INVALID = "Please specify valid {name}"
 NOTIFICATION_DAY = "Please specify valid notification day."
 INVALID_TEMPLATE = "Please specify valid template id."

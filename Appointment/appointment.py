@@ -95,7 +95,7 @@ def book_appointment(appointment_details: dict):
 
         message = "Appointment request submitted successfully."
         return {
-            "data": {},
+            "data":appointment_data,
             "status": True,
             "code": READ_CODE,
             "errorMessage": "",
@@ -112,3 +112,4 @@ def book_appointment(appointment_details: dict):
             "errorMessage": str(e),
             "status": False
         }
+    
