@@ -82,7 +82,7 @@ def fetch_db_objects(data):
 
     logger.info("appointment id: %s, obj %s",appointment_id, appointment_obj)
     if appointment_obj:
-        officials_obj = db.officials.find_one({"officer_id": appointment_obj.get('officer_id','')})
+        officials_obj = db.officials.find_one({"officer_id": int(appointment_obj.get('officer_id',''))})
         visitor_obj = db.visitors.find_one({ "_id":appointment_obj.get('visitor_id','')})
 
     return officials_obj, visitor_obj, appointment_obj
@@ -302,17 +302,17 @@ def check_verification_status(data={}):
         verify_response_obj = {"is_valid": True, 'is_verified':False, 'send_consent':False}
         code=READ_CODE
 
-        officials_obj = db.appointment_bookings.find_one({"appointment_id": appointment_id})
-        logger.info("Appointment OBJ: %s", officials_obj)
+        appointment_obj = db.appointment_bookings.find_one({"appointment_id": appointment_id})
+        logger.info("Appointment OBJ: %s", appointment_obj)
 
         # Handle case when booking is not found
-        if not officials_obj:
+        if not appointment_obj:
             # verify_response_obj["is_valid"] = False
             message = NO_BOOKING_FOUND
             return generate_response(message, verify_response_obj, VALIDATION_FAIL_CODE, False)
 
         # visitor_obj = db.visitors.find_one({"_id": booking_obj.get("visitor_id", '')})
-        officials_obj = db.officials.find_one({"officer_id": officials_obj.get("officer_id", '')})
+        officials_obj = db.officials.find_one({"officer_id": int(officials_obj.get("officer_id", ''))})
 
         # Handle case when event is not found
         if not officials_obj:
@@ -323,7 +323,7 @@ def check_verification_status(data={}):
         
 
         # Handle case when visitor is already verified
-        if officials_obj.get("is_verified", False):                
+        if appointment_obj.get("is_verified", False):                
             verify_response_obj["is_verified"] = True
             message = BOOKING_ALREADY_VERIFIED
             return generate_response(message, verify_response_obj, VALIDATION_FAIL_CODE, True)
