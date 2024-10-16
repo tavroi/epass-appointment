@@ -8,5 +8,24 @@ pymongo
 qrcode[pil]
 fuzzywuzzy==0.18.0
 pandas
+pytz
 openpyxl
+reportlab
+razorpay
+# dotenv
+# random
+# dlib==19.22.1
+# face_recognition 
+pillow 
+opencv-python
+pycryptodome
+python-jose
+passlib
+bcrypt
 regex
+asyncio
+# qrcode
+# base64
+# pycrypto
+# pyzbar
+# numpy
