@@ -264,3 +264,231 @@ def seconds_to_time(seconds):
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
     return time(hour=hours, minute=minutes)
+
+
+def call_api(method, url, headers=None, payload=None):
+    if not headers:
+        headers = {'Content-Type': 'application/json'}
+    payload = {} if not payload else payload
+    response = requests.request(method=method, url=url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200:
+        response_data = response.json()
+        # response_data["status_code"]
+    else:
+        response_data = response.text
+    return response_data
+
+def fetch_template_details(template_id):
+    """Fetch template details from DolphinChat API."""
+    url = f"{DC_BASE_URL}/{DC_API_VERSION}/admin/wa/template/{AGENT_ID}?template_id={template_id}"
+    headers = {
+        'Authorization': 'Bearer c167a76eddda4be489f0fe373eb75bb5',
+        'Content-Type': 'application/json'
+    }
+    return call_api("GET", url, headers=headers)
+
+def fetch_payload(template_id):
+    api_response = fetch_template_details(template_id)
+
+    api_status = True if isinstance(api_response, dict) and api_response.get("status") else False
+    if not api_status:
+            return {
+                "code": INVALID_CODE,
+                "status": True,
+                "message": "Unable to fetch template details",
+                "errorMessage": ""
+            }
+        
+    is_header_image = api_response.get("data", {}).get("template_header", {}).get("type") == "image"
+    variable_count = api_response.get("data", {}).get("template_body", {}).get("count_of_variable", 0)
+    buttons_count = api_response.get("data", {}).get("template_buttons", {}).get("count_of_variable", 0)
+    
+
+    return {
+        "is_header_image":is_header_image,
+        "variable_count":variable_count,
+        "buttons_count":buttons_count
+    }
+
+
+def generate_payload(name,event_id,template_id,button_url:Optional[str]=""):
+
+    template_obj = db.event_template.find_one({"template_id": template_id})
+    event_obj = db.events.find_one({"event_id": event_id})
+    event_name = event_obj.get("event_name")
+    event_start_date , event_start_time = convert_datetime(event_obj.get("event_start_date"))
+    banner_image = event_obj.get("banner_image","")
+    event_address = event_obj.get("address").get("full_address","")
+    map_link = event_obj.get("address").get("map_link","")
+    signature = event_obj.get("signature", "Team Digipass")
+    mobile_number = event_obj.get("mobile_number","9999999999")
+    is_header_image = template_obj.get("is_header_image",False)
+    print("image:",is_header_image)
+    print("button_url:",button_url)
+
+    variable_count = template_obj.get("template_body").get("count_of_variable")
+    variables = template_obj.get("template_body").get("body")
+
+    buttons_count = template_obj.get("template_buttons").get("count_of_buttons")
+    buttons = template_obj.get("template_buttons").get("buttons")
+
+    url_types = [item['url_type'] for item in buttons if 'url_type' in item]
+    
+    send_payload = {"body": []}
+
+    if is_header_image:
+        send_payload["body"].append({
+            "type": "header",
+            "parameters": [
+                {
+                    "type": "image",
+                    "image": {
+                        "link": banner_image
+                    }
+                }
+            ]
+        })
+
+    if variable_count >0:
+        parameters = []
+        for i in variables:
+            param = {"type": "text", "text": ""}
+            if i == "{name}":
+                param["text"] = name
+            elif i == "{event_name}":
+                param["text"] = event_name
+            elif i == "{event_start_date}":
+                param["text"] = event_start_date
+            elif i == "{event_start_time}":
+                param["text"] = event_start_time
+            elif i == "{address}" :
+                param["text"] = event_address
+            elif i == "{map_link}" :
+                param["text"] = map_link
+            elif i == "{signature}" :
+                param["text"] = signature
+            elif i == "{mobile_number}" :
+                param["text"] = mobile_number
+
+            parameters.append(param)
+
+        send_payload["body"].append({
+            "type": "body",
+            "parameters": parameters
+        })
+
+
+        if buttons_count == 1:
+            if url_types and url_types[0] == "dynamic":
+                param = {
+                "type": 'button',
+                "sub_type": "url",
+                "index": "0",  
+                "parameters": [
+                    {
+                        "type": "text",
+                        "text": button_url
+                    }
+                ]
+            }
+                send_payload["body"].append(param)
+
+        else:  
+            for index in range(buttons_count):
+                if index < len(url_types):
+                    if url_types[index] == "dynamic":
+                        param = {
+                            "type": 'button',
+                            "sub_type": "url",
+                            "index": str(index),  
+                            "parameters": [
+                                {
+                                    "type": "text",
+                                    "text": button_url  
+                                }
+                            ]
+                        }
+                    elif url_types[index] == "static":
+                        param = {
+                            "type": 'button',
+                            "sub_type": "url",
+                            "index": str(index),
+                            "parameters": [
+                                {
+                                    "type": "text",
+                                    "text": " "
+                                }
+                            ]
+                        }
+                    send_payload["body"].append(param)
+
+
+    print("Generated Payload:", send_payload)  
+    return send_payload
+
+def send_whatsapp_message( template_id, mobile_no,event_id,type_id,name,campaing_type,campaing_id:Optional[str]="",button_url:Optional[str]=""):
+    """Send WhatsApp message via DolphinChat API."""
+    payload_data = generate_payload(name,event_id,template_id,button_url)
+    url = f"{DC_BASE_URL}/{DC_API_VERSION}/messaging/whatsapp/{AGENT_ID}"
+    headers = {
+        'Authorization': 'Bearer c167a76eddda4be489f0fe373eb75bb5',
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        "to": mobile_no,
+        "type_of_message": "template",
+        "template_id": template_id,
+        "payload": payload_data
+    }
+    response = call_api("POST", url, headers=headers, payload=payload)
+    response_status = True if isinstance(response, dict) and response.get("status") else False
+    wa_invites_id =unique_id()
+    db.broadcast_list.insert_one(
+                        {"_id": wa_invites_id,
+                         "name":name,
+                         "email": "",
+                         "mobile": mobile_no,
+                         "created_at": current_timestamp(),
+                         "message_status": True if response_status else False,
+                         "response": response,
+                         "message_payload":payload_data,
+                         "message_type": type_id,
+                         "campaing_type": campaing_type,
+                         "channel":"whatsapp",
+                         "campaing_id":campaing_id,
+                         "event_id":event_id
+                        }
+                    )
+    db.wa_message_status.insert_one(
+        {"_id":unique_id(),
+         "created_at":current_timestamp(),
+         "delivery_status":"Initiated",
+         "mobile":mobile_no,
+         "event_id":event_id,
+         "campaing_id":campaing_id,
+         "message_id":response.get("data", {}).get("mid")})
+    
+    print(response)
+    return response
+
+
+def format_invite_mail(body, name, event_obj, event_date, event_time):
+    return body.format(
+        guest_name=name,
+        event_name=event_obj.get("event_name", "").title(),
+        event_date=event_date,
+        event_time=event_time,
+        full_address = event_obj.get("address").get("full_address"),
+        map_link= event_obj.get("map_link",""),
+        event_location=event_obj.get("venue"),
+        verification_link= event_obj.get("verification_link","")
+    )
+
+def format_cancel_mail(body, name, event_obj, event_date, event_time):
+    return body.format(
+        guest_name=name,
+        event_name=event_obj.get("event_name", "").title(),
+        event_date=event_date,
+        event_time=event_time,
+        event_location=event_obj.get("venue")
+    )
