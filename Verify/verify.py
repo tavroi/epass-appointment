@@ -89,7 +89,6 @@ def fetch_db_objects(data):
 
 def create_initial_response():
     return {
-        "send_consent": False,
         "encrypted_face_data":"",
         "qr_link": "",
         "data_qr_link": "",
@@ -299,7 +298,7 @@ def check_verification_status(data={}):
         logger.info("Booking ID: %s", appointment_id)
 
         message = "Proceed for verification"
-        verify_response_obj = {"is_valid": True, 'is_verified':False, 'send_consent':False}
+        verify_response_obj = {"is_valid": True, 'is_verified':False}
         code=READ_CODE
 
         appointment_obj = db.appointment_bookings.find_one({"appointment_id": appointment_id})
@@ -362,10 +361,6 @@ def visitor_details(appointment_id=''):
          
         visitor_obj = db.visitors.find_one({"_id": appointment_obj.get("visitor_id", '')})
         
-        # Handle case when visitor is already verified
-        if visitor_obj.get("consent", False): 
-            message = BOOKING_ALREADY_VERIFIED
-            return generate_response(message, {}, VALIDATION_FAIL_CODE, False)
         
         # verify_response_obj["appointment_data"]=user_obj
         data=appointment_obj
@@ -417,7 +412,7 @@ def update_visitor_details(visitor_data={}):
         # logger.info("AWS_response: %s", aws_response)
 
         if appointment_obj.get('payment_status')=="Completed" and appointment_obj.get('is_verified', False):
-            verify_response_obj["send_consent"]=True
+
             message="booking verified"
 
         verify_response_obj['encrypted_face_data'] = encrypt_base64_string(visitor_data['face_data'])
