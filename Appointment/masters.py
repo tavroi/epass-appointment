@@ -75,7 +75,7 @@ def get_time_slots(officer_id, department_id, date):
         })
 
         available_slots = []  
-        seen_slot_ids = set()  # Set to track added slot IDs
+        seen_slot_ids = set()  
 
         if officer_availability:
             slot_ids = officer_availability.get("slot", [])
@@ -87,7 +87,7 @@ def get_time_slots(officer_id, department_id, date):
             if slots:
                 for slot in slots:
                     slot_time_str = slot['slot_time']
-                    slot_id = slot['slot_id']  # Get the slot ID
+                    slot_id = slot['slot_id']  
                     start_time_str, end_time_str = slot_time_str.split(" - ")
 
                     slot_start = datetime.strptime(start_time_str, '%H:%M').time()
@@ -95,13 +95,13 @@ def get_time_slots(officer_id, department_id, date):
 
                     if date_obj.date() == today:
                         if slot_start_datetime > now:  
-                            if slot_id not in seen_slot_ids:  # Check for duplicates
+                            if slot_id not in seen_slot_ids: 
                                 available_slots.append(slot)
-                                seen_slot_ids.add(slot_id)  # Add to seen set
+                                seen_slot_ids.add(slot_id)  
                     else:
-                        if slot_id not in seen_slot_ids:  # Check for duplicates
+                        if slot_id not in seen_slot_ids:  
                             available_slots.append(slot)
-                            seen_slot_ids.add(slot_id)  # Add to seen set
+                            seen_slot_ids.add(slot_id) 
 
                 if available_slots:
                     available_slots.sort(key=lambda x: datetime.strptime(x['slot_time'].split(" - ")[0], '%H:%M'))
@@ -142,7 +142,7 @@ def get_time_slots(officer_id, department_id, date):
 
             for slot in slots:
                 slot_time_str = slot['slot_time']
-                slot_id = slot['slot_id']  # Get the slot ID
+                slot_id = slot['slot_id']  
                 start_time_str, end_time_str = slot_time_str.split(" - ")
 
                 slot_start = datetime.strptime(start_time_str, '%H:%M').time()
@@ -154,13 +154,13 @@ def get_time_slots(officer_id, department_id, date):
                     
                     if date_obj.date() == today:
                         if slot_start_datetime > now:  
-                            if slot_id not in seen_slot_ids:  # Check for duplicates
+                            if slot_id not in seen_slot_ids:  
                                 available_slots.append(slot)
-                                seen_slot_ids.add(slot_id)  # Add to seen set
+                                seen_slot_ids.add(slot_id)  
                     else:
-                        if slot_id not in seen_slot_ids:  # Check for duplicates
+                        if slot_id not in seen_slot_ids:  
                             available_slots.append(slot)
-                            seen_slot_ids.add(slot_id)  # Add to seen set
+                            seen_slot_ids.add(slot_id)  
 
         available_slots.sort(key=lambda x: datetime.strptime(x['slot_time'].split(" - ")[0], '%H:%M'))
 
