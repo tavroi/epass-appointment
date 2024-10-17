@@ -2,15 +2,10 @@ from Utils.config import *
 from fastapi.security import OAuth2PasswordBearer
 from Appointment import router as appointment
 from Officers import router as officials
-from Verify import router as verify
-
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app.include_router(appointment, prefix=BASE_ENDPOINT)
 app.include_router(officials, prefix=BASE_ENDPOINT)
-app.include_router(verify, prefix=BASE_ENDPOINT)
-
 
 
 @app.get(f'{BASE_ENDPOINT}/health', tags=['health_check'])
