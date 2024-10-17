@@ -98,8 +98,9 @@ def book_appointment(appointment_details: dict):
 
             # visitor_obj = db.visitors.find_one({"_id":visitor_id})
                     
-            # event_id = " 5f39de7305624e33a02fcc0c874b1ac7" 
+            # event_id = "5f39de7305624e33a02fcc0c874b1ac7" 
             # email_obj = db.email_content.find_one({"event_id":event_id,"type_id": 1})
+            # print(email_obj)
                     
             # email = visitor.get("email_id")
             # name = first_name + " " + last_name
