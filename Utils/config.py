@@ -472,23 +472,10 @@ def send_whatsapp_message( template_id, mobile_no,event_id,type_id,name,campaing
     return response
 
 
-def format_invite_mail(body, name, event_obj, event_date, event_time):
+def format_invite_mail(body, name, official_obj, appointment_date, appointment_time):
     return body.format(
         guest_name=name,
-        event_name=event_obj.get("event_name", "").title(),
-        event_date=event_date,
-        event_time=event_time,
-        full_address = event_obj.get("address").get("full_address"),
-        map_link= event_obj.get("map_link",""),
-        event_location=event_obj.get("venue"),
-        verification_link= event_obj.get("verification_link","")
-    )
-
-def format_cancel_mail(body, name, event_obj, event_date, event_time):
-    return body.format(
-        guest_name=name,
-        event_name=event_obj.get("event_name", "").title(),
-        event_date=event_date,
-        event_time=event_time,
-        event_location=event_obj.get("venue")
+        officer_name=official_obj.get("name", "").title(),
+        appointment_date=appointment_date,
+        appointment_time=appointment_time
     )

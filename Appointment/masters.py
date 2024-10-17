@@ -75,6 +75,7 @@ def get_time_slots(officer_id, department_id, date):
         })
 
         available_slots = []  
+        seen_slot_ids = set()  # Set to track added slot IDs
 
         if officer_availability:
             slot_ids = officer_availability.get("slot", [])
@@ -94,9 +95,13 @@ def get_time_slots(officer_id, department_id, date):
 
                     if date_obj.date() == today:
                         if slot_start_datetime > now:  
-                            available_slots.append(slot)  
+                            if slot_id not in seen_slot_ids:  # Check for duplicates
+                                available_slots.append(slot)
+                                seen_slot_ids.add(slot_id)  # Add to seen set
                     else:
-                        available_slots.append(slot)  
+                        if slot_id not in seen_slot_ids:  # Check for duplicates
+                            available_slots.append(slot)
+                            seen_slot_ids.add(slot_id)  # Add to seen set
 
                 if available_slots:
                     available_slots.sort(key=lambda x: datetime.strptime(x['slot_time'].split(" - ")[0], '%H:%M'))
@@ -123,7 +128,7 @@ def get_time_slots(officer_id, department_id, date):
             print("Week off days:", week_off_days)
             if day_of_week in week_off_days:
                 return {"data": [], "status": False, "code": READ_CODE,
-                        "errorMessage": "", "message": "No available slots on weekends"}
+                        "errorMessage": "No available slots on weekends", "message": ""}
 
             dept_start_time = department.get("start_time", 0)
             dept_end_time = department.get("end_time", 86400)
@@ -149,9 +154,13 @@ def get_time_slots(officer_id, department_id, date):
                     
                     if date_obj.date() == today:
                         if slot_start_datetime > now:  
-                            available_slots.append(slot)  
+                            if slot_id not in seen_slot_ids:  # Check for duplicates
+                                available_slots.append(slot)
+                                seen_slot_ids.add(slot_id)  # Add to seen set
                     else:
-                        available_slots.append(slot)  
+                        if slot_id not in seen_slot_ids:  # Check for duplicates
+                            available_slots.append(slot)
+                            seen_slot_ids.add(slot_id)  # Add to seen set
 
         available_slots.sort(key=lambda x: datetime.strptime(x['slot_time'].split(" - ")[0], '%H:%M'))
 

@@ -20,6 +20,7 @@ test.py
 *.ipa
 *.apk
 .venv
+.env
 .deployment
 
 

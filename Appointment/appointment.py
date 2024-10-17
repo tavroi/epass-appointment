@@ -1,4 +1,7 @@
 from Utils.config import *
+from Utils.send_mail import EmailUtility
+
+Email_obj = EmailUtility
 
 def appointment_booking_id():
     return f'DIGI{uuid.uuid4().hex[:12].upper()}'
@@ -93,37 +96,37 @@ def book_appointment(appointment_details: dict):
 
             db.appointment_bookings.insert_one(appointment_data)
 
-            # visitor_obj = db.visitors.find_one({"_id":visitor_id})
+            visitor_obj = db.visitors.find_one({"_id":visitor_id})
                     
-            # event_id = " " 
-            # email_obj = db.email_content.find_one({"event_id":event_id,"type_id": 1})
+            event_id = " 5f39de7305624e33a02fcc0c874b1ac7" 
+            email_obj = db.email_content.find_one({"event_id":event_id,"type_id": 1})
                     
-            # email = visitor.get("email_id")
-            # name = first_name + " " + last_name
-            # campaing_type = "auto"
-            # body = email_obj.get("body")
-            # subject = email_obj.get("subject")
-            # mail_template_body = format_invite_mail(body, name)
-            # mail_invite_subject = subject.format(event_name=event_obj.get("event_name")
-            # if email:
-            #     msg_data = {
-            #         "recipient": email,
-            #         "subject": mail_invite_subject,
-            #         "message": mail_template_body
-            #     }
-            # email_response = Email_obj.SendEmailToDistrictUser(msg_data,[email],event_id,1,name,campaing_type)
-            # logger.info("email_response----->>>",email_response)
+            email = visitor.get("email_id")
+            name = first_name + " " + last_name
+            campaing_type = "auto"
+            body = email_obj.get("body")
+            subject = email_obj.get("subject")
+            official_obj = db.officials.find_one({"officer_id":int(visitor.get('officer_id', ''))})
+            appointment_date_visitor, appointment_time = convert_datetime(appointment_date)
+            mail_template_body = format_invite_mail(body, name,official_obj,appointment_date_visitor,appointment_time)
+            mail_invite_subject = subject
+            if email: 
+                msg_data = {
+                    "recipient": email,
+                    "subject": mail_invite_subject,
+                    "message": mail_template_body
+                }
+            email_response = Email_obj.SendEmailToDistrictUser(msg_data,[email],event_id,1,name,campaing_type)
+            logger.info("email_response----->>>",email_response)
 
-            #     if visitor_obj.get("on_whatsapp"):
-            #         type_id = 1
-            #         mobile_no= str(visitor_obj.get("phone_number"))[-12:]
-            #         template_id = "1270452274119007"
-            #         print("redirect_url:",redirect_url)
-            #         campaing_id=" "
-            #         response = send_whatsapp_message(template_id, mobile_no,event_id,type_id,name,campaing_type,campaing_id,redirect_url)
-            #         print( response)
-
-                   
+            if visitor_obj.get("on_whatsapp"):
+                    type_id = 1
+                    mobile_no= str(visitor_obj.get("phone_number"))[-12:]
+                    template_id = "1270452274119007"
+                    campaing_id=" "
+                    redirect_url = " "
+                    response = send_whatsapp_message(template_id, mobile_no,event_id,type_id,name,campaing_type,campaing_id,redirect_url)
+                    print( response)
 
         message = "Appointment request submitted successfully."
         return {
