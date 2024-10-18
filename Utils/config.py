@@ -12,6 +12,7 @@ import regex as re
 import pandas as pd
 from io import BytesIO
 import hashlib
+import pytz
 from threading import Thread
 # import cv2
 # from pyzbar.pyzbar import decode
@@ -238,12 +239,43 @@ def date_to_epoch(date_str):
         return None
     
 def convert_datetime(event_start_timestamp):
-    
-    event_datetime = datetime.fromtimestamp(event_start_timestamp/1000.0)
-    event_date = datetime.strftime(event_datetime, "%d-%b-%Y")
-    event_time = datetime.strftime(event_datetime, "%H:%M")
+   
+    timezone = pytz.timezone('Asia/Kolkata')  
 
-    return(event_date,event_time)
+    event_datetime = datetime.fromtimestamp(event_start_timestamp, tz=pytz.utc)
+
+    event_datetime = event_datetime.astimezone(timezone)
+    
+    event_date = event_datetime.strftime("%d-%b-%Y")
+    event_time = event_datetime.strftime("%H:%M")
+
+    return event_date
+
+def get_slot_times(slot_ids):
+    slots = list(db.slots.aggregate([
+        {
+            '$match': {
+                'slot_id': {'$in': slot_ids}
+            }
+        },
+        {
+            '$project': {
+                'startTime': {'$arrayElemAt': [{'$split': ['$slot_time', ' - ']}, 0]},
+                'endTime': {'$arrayElemAt': [{'$split': ['$slot_time', ' - ']}, 1]}
+            }
+        }
+    ]))
+    times = []
+    for slot in slots:
+        start_time = datetime.strptime(slot['startTime'], '%H:%M')
+        end_time = datetime.strptime(slot['endTime'], '%H:%M')
+        times.append((start_time, end_time))
+    if times:
+            min_time = min(t[0] for t in times)
+            max_time = max(t[1] for t in times)
+            return f"{min_time.strftime('%H:%M')} - {max_time.strftime('%H:%M')}"
+    else:
+        return None, None
 
 def is_valid_email(email):
     if pd.isna(email):
@@ -311,28 +343,24 @@ def fetch_payload(template_id):
     }
 
 
-def generate_payload(name,event_id,template_id,button_url:Optional[str]=""):
+def generate_payload(name,officer_id,appointment_date,appointment_time,template_id,button_url:Optional[str]=""):
 
     template_obj = db.event_template.find_one({"template_id": template_id})
-    event_obj = db.events.find_one({"event_id": event_id})
-    event_name = event_obj.get("event_name")
-    event_start_date , event_start_time = convert_datetime(event_obj.get("event_start_date"))
-    banner_image = event_obj.get("banner_image","")
-    event_address = event_obj.get("address").get("full_address","")
-    map_link = event_obj.get("address").get("map_link","")
-    signature = event_obj.get("signature", "Team Digipass")
-    mobile_number = event_obj.get("mobile_number","9999999999")
+    officer_obj = db.officials.find_one({"officer_id":int(officer_id)})
+    officer_name = officer_obj.get("name"," ")
     is_header_image = template_obj.get("is_header_image",False)
     print("image:",is_header_image)
     print("button_url:",button_url)
 
     variable_count = template_obj.get("template_body").get("count_of_variable")
     variables = template_obj.get("template_body").get("body")
+    print(variables,"variables")
 
     buttons_count = template_obj.get("template_buttons").get("count_of_buttons")
     buttons = template_obj.get("template_buttons").get("buttons")
-
-    url_types = [item['url_type'] for item in buttons if 'url_type' in item]
+    banner_image = "https://dolphinchat-chat.s3.ap-south-1.amazonaws.com/mpsedc/digipass/events1723553117931_1723553119631_Zqd9yx5LeNNTxj_L_SQUARECLEAN.png"
+    if buttons_count and buttons_count >0:
+        url_types = [item['url_type'] for item in buttons if 'url_type' in item]
     
     send_payload = {"body": []}
 
@@ -353,22 +381,14 @@ def generate_payload(name,event_id,template_id,button_url:Optional[str]=""):
         parameters = []
         for i in variables:
             param = {"type": "text", "text": ""}
-            if i == "{name}":
+            if i == "user":
                 param["text"] = name
-            elif i == "{event_name}":
-                param["text"] = event_name
-            elif i == "{event_start_date}":
-                param["text"] = event_start_date
-            elif i == "{event_start_time}":
-                param["text"] = event_start_time
-            elif i == "{address}" :
-                param["text"] = event_address
-            elif i == "{map_link}" :
-                param["text"] = map_link
-            elif i == "{signature}" :
-                param["text"] = signature
-            elif i == "{mobile_number}" :
-                param["text"] = mobile_number
+            elif i == "officer":
+                param["text"] = officer_name
+            elif i == "date":
+                param["text"] = appointment_date
+            elif i == "time":
+                param["text"] = appointment_time
 
             parameters.append(param)
 
@@ -377,7 +397,7 @@ def generate_payload(name,event_id,template_id,button_url:Optional[str]=""):
             "parameters": parameters
         })
 
-
+    if buttons_count and buttons_count >0:
         if buttons_count == 1:
             if url_types and url_types[0] == "dynamic":
                 param = {
@@ -426,9 +446,9 @@ def generate_payload(name,event_id,template_id,button_url:Optional[str]=""):
     print("Generated Payload:", send_payload)  
     return send_payload
 
-def send_whatsapp_message( template_id, mobile_no,event_id,type_id,name,campaing_type,campaing_id:Optional[str]="",button_url:Optional[str]=""):
+def send_whatsapp_message( template_id, mobile_no,officer_id,appointment_date,appointment_time,type_id,name,campaing_type,campaing_id:Optional[str]="",button_url:Optional[str]=""):
     """Send WhatsApp message via DolphinChat API."""
-    payload_data = generate_payload(name,event_id,template_id,button_url)
+    payload_data = generate_payload(name,officer_id,appointment_date,appointment_time,template_id,button_url)
     url = f"{DC_BASE_URL}/{DC_API_VERSION}/messaging/whatsapp/{AGENT_ID}"
     headers = {
         'Authorization': 'Bearer c167a76eddda4be489f0fe373eb75bb5',
@@ -443,6 +463,7 @@ def send_whatsapp_message( template_id, mobile_no,event_id,type_id,name,campaing
     response = call_api("POST", url, headers=headers, payload=payload)
     response_status = True if isinstance(response, dict) and response.get("status") else False
     wa_invites_id =unique_id()
+    event_id = "appointment_id"
     db.broadcast_list.insert_one(
                         {"_id": wa_invites_id,
                          "name":name,
